@@ -36,5 +36,5 @@ private final class List: NSObject, JXPagingViewListViewDelegate {
     let view = UIScrollView()
     func listView() -> UIView { view }
     func listScrollView() -> UIScrollView { view }
-    func listViewDidScrollCallback(callback: @escaping (UIScrollView) -> ()) {}
+    func listViewDidScrollCallback(callback: @escaping @MainActor (UIScrollView) -> ()) {}
 }
