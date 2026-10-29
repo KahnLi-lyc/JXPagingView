@@ -8,6 +8,7 @@
 
 import UIKit
 
+@MainActor
 @objc public protocol JXPagingSmoothViewListViewDelegate {
     /// 返回listView。如果是vc包裹的就是vc.view；如果是自定义view包裹的，就是自定义view自己。
     func listView() -> UIView
@@ -18,6 +19,7 @@ import UIKit
 }
 
 @objc
+@MainActor
 public protocol JXPagingSmoothViewDataSource {
     /// 返回页面header的高度
     func heightForPagingHeader(in pagingView: JXPagingSmoothView) -> CGFloat
@@ -36,6 +38,7 @@ public protocol JXPagingSmoothViewDataSource {
 }
 
 @objc
+@MainActor
 public protocol JXPagingSmoothViewDelegate {
     @objc optional func pagingSmoothViewDidScroll(_ scrollView: UIScrollView)
 }
@@ -61,12 +64,8 @@ open class JXPagingSmoothView: UIView {
     var currentListInitializeContentOffsetY: CGFloat = 0
     var singleScrollView: UIScrollView?
 
-    deinit {
-        listDict.values.forEach {
-            $0.listScrollView().removeObserver(self, forKeyPath: "contentOffset")
-            $0.listScrollView().removeObserver(self, forKeyPath: "contentSize")
-        }
-    }
+    // Tokens invalidate automatically on release; deinit never calls a child or UIKit.
+    private var listObservations: [ObjectIdentifier: [NSKeyValueObservation]] = [:]
 
     public init(dataSource: JXPagingSmoothViewDataSource) {
         self.dataSource = dataSource
@@ -106,10 +105,9 @@ open class JXPagingSmoothView: UIView {
         currentPagingHeaderContainerViewY = 0
         isSyncListContentOffsetEnabled = false
 
+        listObservations.removeAll()
         listHeaderDict.removeAll()
         listDict.values.forEach { (list) in
-            list.listScrollView().removeObserver(self, forKeyPath: "contentOffset")
-            list.listScrollView().removeObserver(self, forKeyPath: "contentSize")
             list.listView().removeFromSuperview()
         }
         listDict.removeAll()
@@ -194,24 +192,56 @@ open class JXPagingSmoothView: UIView {
 
     //MARK: - KVO
 
-    open override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == "contentOffset" {
-            if let scrollView = object as? UIScrollView {
-                listDidScroll(scrollView: scrollView)
-            }
-        }else if keyPath == "contentSize" {
-            if let scrollView = object as? UIScrollView {
-                let minContentSizeHeight = bounds.size.height - heightForPinHeader
-                if minContentSizeHeight > scrollView.contentSize.height {
-                    scrollView.contentSize = CGSize(width: scrollView.contentSize.width, height: minContentSizeHeight)
-                    //新的scrollView第一次加载的时候重置contentOffset
-                    if currentListScrollView != nil, scrollView != currentListScrollView! {
-                        scrollView.contentOffset = CGPoint(x: 0, y: currentListInitializeContentOffsetY)
-                    }
+    // Keep the open KVO hook: typed observations still dispatch through subclass overrides.
+    nonisolated open override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "contentOffset" || keyPath == "contentSize" {
+            // UIKit scroll state must be mutated on the main thread. KVO is synchronous.
+            precondition(Thread.isMainThread, "Observe UIKit scroll views on the main thread")
+            guard let scrollView = object as? UIScrollView else { return }
+            MainActor.assumeIsolated {
+                guard listObservations[ObjectIdentifier(scrollView)] != nil else { return }
+                if keyPath == "contentOffset" {
+                    listDidScroll(scrollView: scrollView)
+                } else {
+                    listContentSizeDidChange(scrollView)
                 }
             }
-        }else {
+        } else {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+        }
+    }
+
+    private func observeList(_ scrollView: UIScrollView) {
+        let key = ObjectIdentifier(scrollView)
+        guard listObservations[key] == nil else { return }
+        let offset = scrollView.observe(\.contentOffset, options: .new) { [weak self] scrollView, change in
+            precondition(Thread.isMainThread, "Mutate UIKit scroll views on the main thread")
+            let value = change.newValue ?? .zero
+            let kind = change.kind.rawValue
+            MainActor.assumeIsolated {
+                guard let self, self.listObservations[ObjectIdentifier(scrollView)] != nil else { return }
+                self.observeValue(forKeyPath: "contentOffset", of: scrollView, change: [.kindKey: kind, .newKey: NSValue(cgPoint: value)], context: nil)
+            }
+        }
+        let size = scrollView.observe(\.contentSize, options: .new) { [weak self] scrollView, change in
+            precondition(Thread.isMainThread, "Mutate UIKit scroll views on the main thread")
+            let value = change.newValue ?? .zero
+            let kind = change.kind.rawValue
+            MainActor.assumeIsolated {
+                guard let self, self.listObservations[ObjectIdentifier(scrollView)] != nil else { return }
+                self.observeValue(forKeyPath: "contentSize", of: scrollView, change: [.kindKey: kind, .newKey: NSValue(cgSize: value)], context: nil)
+            }
+        }
+        listObservations[key] = [offset, size]
+    }
+
+    private func listContentSizeDidChange(_ scrollView: UIScrollView) {
+        let minContentSizeHeight = bounds.size.height - heightForPinHeader
+        if minContentSizeHeight > scrollView.contentSize.height {
+            scrollView.contentSize = CGSize(width: scrollView.contentSize.width, height: minContentSizeHeight)
+            if let currentListScrollView, scrollView !== currentListScrollView {
+                scrollView.contentOffset = CGPoint(x: 0, y: currentListInitializeContentOffsetY)
+            }
         }
     }
 
@@ -302,8 +332,9 @@ extension JXPagingSmoothView: UICollectionViewDataSource, UICollectionViewDelega
                 listHeader.addSubview(pagingHeaderContainerView)
             }
             listHeaderDict[indexPath.item] = listHeader
-            list?.listScrollView().addObserver(self, forKeyPath: "contentOffset", options: .new, context: nil)
-            list?.listScrollView().addObserver(self, forKeyPath: "contentSize", options: .new, context: nil)
+            if let scrollView = list?.listScrollView() {
+                observeList(scrollView)
+            }
         }
         listDict.values.forEach { $0.listScrollView().scrollsToTop = ($0 === list) }
         if let listView = list?.listView(), listView.superview != cell.contentView {

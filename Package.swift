@@ -1,9 +1,9 @@
-// swift-tools-version:5.3
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(
     name: "JXPagingView",
-    platforms: [.iOS(.v8)],
+    platforms: [.iOS(.v16)],
     products: [.library(name: "JXPagingView", targets: ["JXPagingView"])],
     targets: [
         .target(
@@ -14,5 +14,5 @@ let package = Package(
         ),
         .testTarget(name: "JXPagingViewTests", dependencies: ["JXPagingView"]),
     ],
-    swiftLanguageVersions: [.v5]
+    swiftLanguageModes: [.v6]
 )

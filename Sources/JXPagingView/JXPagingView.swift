@@ -8,6 +8,7 @@
 
 import UIKit
 
+@MainActor
 public protocol JXPagingViewDelegate: NSObjectProtocol {
     /// tableHeaderView的高度，因为内部需要比对判断，只能是整型数
     func tableHeaderViewHeight(in pagingView: JXPagingView) -> Int
@@ -405,14 +406,17 @@ extension JXPagingView: JXPagingListContainerViewDataSource {
         }
         if list == nil {
             list = delegate.pagingView(self, initListAtIndex: index)
-            list?.listViewDidScrollCallback {[weak self, weak list] (scrollView) in
-                self?.currentList = list
-                self?.listViewDidScroll(scrollView: scrollView)
-            }
-            validListDict[index] = list!
-            if allowsCacheList, let listIdentifier = delegate.pagingView(self, listIdentifierAtIndex: index) {
-                listCache[listIdentifier] = list
-            }
+        }
+        validListDict[index] = list!
+        list?.listViewDidScrollCallback { [weak self, weak list] scrollView in
+            guard let self, let list,
+                  self.validListDict.values.contains(where: { $0 === list }),
+                  list.listScrollView() === scrollView else { return }
+            self.currentList = list
+            self.listViewDidScroll(scrollView: scrollView)
+        }
+        if allowsCacheList, let listIdentifier = delegate.pagingView(self, listIdentifierAtIndex: index) {
+            listCache[listIdentifier] = list
         }
         return list!
     }

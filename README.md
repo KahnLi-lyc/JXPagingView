@@ -1,3 +1,6 @@
+> 自有 master 现面向 Swift 6.0+ 工具链、Swift 6 语言模式和 iOS 16+。
+> 升级前阅读 [Swift 6 迁移指南](docs/SWIFT6_MIGRATION.md)；原上游说明中的旧系统／工具链范围不再适用于当前 SPM 分发。
+
 # JXPagingView — Independently maintained SwiftPM fork
 
 A Swift UIKit paging container for vertically coordinated headers and horizontally
