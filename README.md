@@ -24,7 +24,7 @@ from `master`. Link product `JXPagingView`, then `import JXPagingView`.
 The old `spm` branch is frozen for existing consumers. See the
 [branching guide](docs/BRANCHING.md) for maintenance and upstream updates.
 
-The package target uses `path: "Sources"`, `sources: ["JXPagingView"]`, Swift 5
+The package target uses `path: "Sources"`, `sources: ["JXPagingView"]`, Swift 6
 language mode, and copies `PrivacyInfo.xcprivacy` into its SwiftPM resource bundle.
 All five upstream Swift files remain under `Sources/JXPagingView`. The main
 classes are `JXPagingView`, `JXPagingListContainerView`, `JXPagingListRefreshView`,
@@ -47,3 +47,7 @@ scripts/test-ios.sh <simulator-uuid>
 The tests import the actual package, check its bundled privacy manifest, and
 exercise both list container types inside a parent with forced RTL semantics.
 See [maintenance](docs/MAINTENANCE.md) and [recorded validation](docs/VALIDATION.md).
+
+## Maintained UIKit Demo
+
+Open `Demo/JXPagingViewDemo.xcodeproj` and run scheme `JXPagingViewDemo`. It uses this local Package only. See [usage](Demo/README.md) and [feature coverage](Demo/COVERAGE.md).
