@@ -1,8 +1,8 @@
 # Maintenance scope
 
-This permanent `spm` branch starts at upstream JXPagingView 2.1.3,
-`a55dd07adfa9729677e2287943af5aa40f5df31f`. The fork's master history and
-upstream tags are preserved.
+The maintained `master` distribution is based on upstream JXPagingView 2.1.3,
+`a55dd07adfa9729677e2287943af5aa40f5df31f`. The fork's Git history and
+upstream tags are preserved. The old `spm` branch is frozen for compatibility.
 
 The distribution removes `Sources/JXPagerView` (Objective-C), `Examples` (including
 vendored Pods), and `JXPagingView.podspec`. No duplicate root Swift directory or
@@ -34,3 +34,11 @@ xcodebuild -scheme JXPagingView \
 
 The package has no external dependencies. Run these checks before committing
 future maintenance updates; do not replace upstream tags or rewrite master.
+
+## Branch maintenance
+
+`master` is the active default branch. Work on `feature/*` or `fix/*`, run the
+package regressions, and merge into `master` before updating consumers.
+The one-time history reconciliation keeps the tested `spm` source tree; it does
+not adopt later upstream changes merely because their commits are ancestors.
+See [branching](BRANCHING.md) and the explicit [upstream review ledger](UPSTREAM_REVIEW.md).

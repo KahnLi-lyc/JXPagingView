@@ -1,13 +1,13 @@
-# JXPagingView — Club Circle SwiftPM fork
+# JXPagingView — Independently maintained SwiftPM fork
 
 A Swift UIKit paging container for vertically coordinated headers and horizontally
 paged lists. This fork ships the upstream Swift implementation as one SwiftPM
 library; Objective-C, vendored example dependencies, and CocoaPods distribution
-are intentionally absent from the `spm` branch.
+are intentionally absent from the maintained `master` distribution.
 
 ## Provenance and license
 
-- Fork: https://github.com/KahnLi-lyc/JXPagingView (`spm` maintenance branch).
+- Fork: https://github.com/KahnLi-lyc/JXPagingView (`master` maintenance branch).
 - Upstream: https://github.com/pujiaxin33/JXPagingView
 - Exact base: `a55dd07adfa9729677e2287943af5aa40f5df31f` (2.1.3).
 - The original [MIT license](LICENSE) and Swift source author notices are retained.
@@ -16,8 +16,10 @@ are intentionally absent from the `spm` branch.
 
 ## Swift Package Manager
 
-Add `https://github.com/KahnLi-lyc/JXPagingView` and select branch `spm`, or pin a
-reviewed commit. Link product `JXPagingView`, then `import JXPagingView`.
+Add `https://github.com/KahnLi-lyc/JXPagingView` and pin a reviewed full commit
+from `master`. Link product `JXPagingView`, then `import JXPagingView`.
+The old `spm` branch is frozen for existing consumers. See the
+[branching guide](docs/BRANCHING.md) for maintenance and upstream updates.
 
 The package target uses `path: "Sources"`, `sources: ["JXPagingView"]`, Swift 5
 language mode, and copies `PrivacyInfo.xcprivacy` into its SwiftPM resource bundle.
