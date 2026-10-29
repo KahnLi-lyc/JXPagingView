@@ -1,31 +1,18 @@
 // swift-tools-version:5.3
-// The swift-tools-version declares the minimum version of Swift required to build this package.
-
 import PackageDescription
 
 let package = Package(
     name: "JXPagingView",
-    platforms: [
-        .iOS(.v8)
-    ],
-    products: [
-        // Products define the executables and libraries produced by a package, and make them visible to other packages.
-        .library(
-            name: "JXPagingView",
-            targets: ["JXPagingView"]),
-    ],
-    dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
-    ],
+    platforms: [.iOS(.v8)],
+    products: [.library(name: "JXPagingView", targets: ["JXPagingView"])],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "JXPagingView",
-            path: "Sources/JXPagingView",
-            resources: [.copy("Sources/PrivacyInfo.xcprivacy")]
+            path: "Sources",
+            sources: ["JXPagingView"],
+            resources: [.copy("PrivacyInfo.xcprivacy")]
         ),
+        .testTarget(name: "JXPagingViewTests", dependencies: ["JXPagingView"]),
     ],
-    swiftLanguageVersions: [.v5, .v4_2]
+    swiftLanguageVersions: [.v5]
 )
