@@ -13,10 +13,9 @@ The upstream SwiftPM resource path was relative to `Sources/JXPagingView` but
 pointed to `Sources/PrivacyInfo.xcprivacy` beneath that directory. Xcode emitted
 `Invalid Resource 'Sources/PrivacyInfo.xcprivacy': File not found.` and produced
 no resource accessor. The target now starts at `Sources`, explicitly includes
-only `JXPagingView`, and copies the neighboring privacy manifest. Only Swift 5
-language mode is advertised. All five library Swift files are unchanged from
-the approved upstream base; no RTL or compatibility source patch was needed by
-the standalone checks.
+only `JXPagingView`, and copies the neighboring privacy manifest. The initial distribution advertised Swift 5 mode. The current distribution uses
+Swift tools 6.0, Swift 6 language mode and iOS 16; actor isolation and owned KVO
+observation are maintenance patches. See SWIFT6_MIGRATION.md for source changes.
 
 `Tests/JXPagingViewTests` tests the package's `Bundle.module` resource and logical
 selection of both collection-view and scroll-view containers under a forced RTL
@@ -42,3 +41,10 @@ package regressions, and merge into `master` before updating consumers.
 The one-time history reconciliation keeps the tested `spm` source tree; it does
 not adopt later upstream changes merely because their commits are ancestors.
 See [branching](BRANCHING.md) and the explicit [upstream review ledger](UPSTREAM_REVIEW.md).
+
+## Swift 6 maintenance
+
+Current SPM requirements: Swift tools 6.0, Swift 6 language mode, iOS 16.
+The adopted upstream release baseline is unchanged. Concurrency/lifecycle patches
+are fork-owned; see [migration guide](SWIFT6_MIGRATION.md) and actual validation.
+Original license, authorship and privacy resources are retained.
