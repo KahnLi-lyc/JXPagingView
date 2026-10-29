@@ -20,9 +20,9 @@
 
 ```swift
 @MainActor
-final class FeedController: UIViewController, JXPagingViewDelegate {
-    // 实现 Header、pin Header、高度、数量和列表工厂，完整版本见 PagingDemoController。
-    lazy var paging = JXPagingView(delegate: self, listContainerType: .scrollView)
+func makePaging(delegate: any JXPagingViewDelegate) -> JXPagingView {
+    // delegate 提供 Header、pin Header、高度、数量和列表工厂。
+    JXPagingView(delegate: delegate, listContainerType: .scrollView)
 }
 
 // 列表持有自己的 UIScrollViewDelegate，并保留组件注册的同步回调：

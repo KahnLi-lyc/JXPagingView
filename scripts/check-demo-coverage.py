@@ -8,9 +8,16 @@ if (root / "Demo/Resources/route-coverage.json").is_file():
     index = json.loads((root / "Demo/Resources/route-coverage.json").read_text())
     routes = set(re.findall(r'\.init\(id: "([^"]+)"', (root / "Demo/App/Catalog.swift").read_text()))
     tests = (root / "Demo/UITests/CatalogUITests.swift").read_text()
+    catalog = (root / "Demo/App/Catalog.swift").read_text()
+    catalog_presets = {
+        match.group(1): json.loads("[" + match.group(2) + "]")
+        for match in re.finditer(r'\.init\(id: "([^"]+)"[^\n]*presets: \[([^\n]*)\]\)', catalog)
+    }
     for route in index["routes"]:
         method = route["test"].split("/")[-1]
         assert "func " + method + "(" in tests, method
+        assert route["presets"] == catalog_presets[route["id"]], route["id"]
+        assert f'exercise("{route["id"]}", presets: {len(route["presets"])})' in tests, route["id"]
 else:
     index = json.loads((root / "Demo/coverage.json").read_text())
     catalog = (root / "Demo/Sources/CatalogController.swift").read_text()

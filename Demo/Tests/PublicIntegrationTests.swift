@@ -4,49 +4,58 @@ import JXPagingView
 
 @MainActor
 final class PublicIntegrationTests: XCTestCase {
-    private func mount(_ view: UIView) -> UIWindow {
+    private func mount(_ view: UIView) async -> UIWindow {
         let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
-        let controller = UIViewController()
+        let controller = VisibleHostController()
         window.rootViewController = controller
         controller.loadViewIfNeeded()
         view.frame = controller.view.bounds; controller.view.addSubview(view)
-        controller.beginAppearanceTransition(true, animated: false)
-        view.layoutIfNeeded()
-        controller.endAppearanceTransition()
+        window.makeKeyAndVisible()
+        controller.view.layoutIfNeeded(); view.layoutIfNeeded()
+        for _ in 0..<100 where !controller.appeared {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(controller.appeared, "Fixture must finish real window appearance")
         return window
     }
-    func testBothContainersLazySelectionLifecycleAndRelease() {
+    private func assertReleased(_ reference: WeakReference) async {
+        for _ in 0..<100 where reference.value != nil {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertNil(reference.value)
+    }
+    func testBothContainersLazySelectionLifecycleAndRelease() async {
         for type in [JXPagingListContainerType.scrollView, .collectionView] {
-            let released = WeakReference(nil)
+            let source = Fixture()
+            var paging: JXPagingView? = JXPagingView(delegate: source, listContainerType: type)
+            let released = WeakReference(paging)
             let releasedList = WeakReference(nil)
+            let window = await mount(paging!)
             autoreleasepool {
-                let source = Fixture()
-                let paging = JXPagingView(delegate: source, listContainerType: type)
-                released.value = paging
-                let window = mount(paging)
-                paging.reloadData(); paging.layoutIfNeeded()
+                paging!.reloadData(); paging!.layoutIfNeeded()
                 let baseline = source.created
-                XCTAssertNotNil(paging.validListDict[0])
-                XCTAssertNil(paging.validListDict[2])
-                let first = paging.validListDict[0] as! TestList
-                paging.listContainerView.didClickSelectedItem(at: 1)
-                XCTAssertEqual(paging.listContainerView.currentIndex, 1)
+                XCTAssertNotNil(paging!.validListDict[0])
+                XCTAssertNil(paging!.validListDict[2])
+                let first = paging!.validListDict[0] as! TestList
+                paging!.listContainerView.didClickSelectedItem(at: 1)
+                XCTAssertEqual(paging!.listContainerView.currentIndex, 1)
                 XCTAssertEqual(source.created, baseline + 1)
                 XCTAssertTrue(first.events.suffix(2).elementsEqual(["willDisappear", "didDisappear"]))
-                let second = paging.validListDict[1] as! TestList
+                let second = paging!.validListDict[1] as! TestList
                 XCTAssertTrue(second.events.suffix(2).elementsEqual(["willAppear", "didAppear"]))
                 releasedList.value = second
-                paging.removeFromSuperview(); window.rootViewController = nil
+                paging!.removeFromSuperview(); window.isHidden = true; window.rootViewController = nil
+                paging = nil
             }
-            XCTAssertNil(released.value)
-            XCTAssertNil(releasedList.value)
+            await assertReleased(released)
+            await assertReleased(releasedList)
         }
     }
-    func testStableCacheReordersPreservesInstanceAndScrollPosition() {
+    func testStableCacheReordersPreservesInstanceAndScrollPosition() async {
         let source = Fixture()
         let paging = JXPagingView(delegate: source, listContainerType: .scrollView)
         paging.allowsCacheList = true
-        let window = mount(paging); defer { window.isHidden = true }
+        let window = await mount(paging); defer { window.isHidden = true }
         paging.reloadData()
         let first = paging.validListDict[0] as! TestList
         paging.mainTableView.contentOffset.y = CGFloat(source.height)
@@ -57,12 +66,12 @@ final class PublicIntegrationTests: XCTestCase {
         XCTAssertEqual(source.created, 1)
         XCTAssertEqual(first.scroll.contentOffset.y, 140)
     }
-    func testPinOffsetAndHeaderResizeUseActualGeometry() {
+    func testPinOffsetAndHeaderResizeUseActualGeometry() async {
         for type in [JXPagingListContainerType.scrollView, .collectionView] {
             let source = Fixture()
             let paging = JXPagingView(delegate: source, listContainerType: type)
             paging.pinSectionHeaderVerticalOffset = 20
-            let window = mount(paging); defer { window.isHidden = true }
+            let window = await mount(paging); defer { window.isHidden = true }
             paging.reloadData(); paging.layoutIfNeeded()
             paging.mainTableView.contentOffset.y = 180
             XCTAssertEqual(paging.mainTableView.contentOffset.y, 160, accuracy: 1)
@@ -72,10 +81,10 @@ final class PublicIntegrationTests: XCTestCase {
             XCTAssertEqual(paging.mainTableView.tableHeaderView?.bounds.height, 260)
         }
     }
-    func testRefreshRemainsActiveWhenSwitchingScrollContainer() {
+    func testRefreshRemainsActiveWhenSwitchingScrollContainer() async {
         let source = Fixture()
         let paging = JXPagingListRefreshView(delegate: source, listContainerType: .scrollView)
-        let window = mount(paging); defer { window.isHidden = true }
+        let window = await mount(paging); defer { window.isHidden = true }
         paging.reloadData()
         let first = paging.validListDict[0] as! TestList
         first.scroll.refreshControl = UIRefreshControl()
@@ -87,10 +96,10 @@ final class PublicIntegrationTests: XCTestCase {
         first.scroll.refreshControl?.endRefreshing()
         XCTAssertFalse(first.scroll.refreshControl!.isRefreshing)
     }
-    func testControllerListsHaveContainmentAndReloadRemovesOldParent() {
+    func testControllerListsHaveContainmentAndReloadRemovesOldParent() async {
         let source = Fixture(); source.controllerLists = true
         let paging = JXPagingView(delegate: source, listContainerType: .scrollView)
-        let window = mount(paging); defer { window.isHidden = true }
+        let window = await mount(paging); defer { window.isHidden = true }
         paging.reloadData()
         let first = paging.validListDict[0] as! TestController
         XCTAssertNotNil(first.parent)
@@ -98,26 +107,25 @@ final class PublicIntegrationTests: XCTestCase {
         XCTAssertNil(first.parent)
         XCTAssertNotNil((paging.validListDict[0] as! TestController).parent)
     }
-    func testSmoothReloadIgnoresOldListAndReleases() {
-        let released = WeakReference(nil)
+    func testSmoothReloadIgnoresOldListAndReleases() async {
+        let source = Fixture()
+        var paging: JXPagingSmoothView? = JXPagingSmoothView(dataSource: source)
+        let released = WeakReference(paging)
+        let window = await mount(paging!)
         var retainedOldList: TestList?
         autoreleasepool {
-            let source = Fixture()
-            let paging = JXPagingSmoothView(dataSource: source)
-            released.value = paging
-            let window = mount(paging)
-            paging.reloadData(); paging.listCollectionView.layoutIfNeeded()
-            let old = paging.listDict[0] as! TestList
+            paging!.reloadData(); paging!.listCollectionView.layoutIfNeeded()
+            let old = paging!.listDict[0] as! TestList
             retainedOldList = old
-            paging.reloadData(); paging.listCollectionView.layoutIfNeeded()
-            let current = paging.listDict[0] as! TestList
+            paging!.reloadData(); paging!.listCollectionView.layoutIfNeeded()
+            let current = paging!.listDict[0] as! TestList
             XCTAssertFalse(old === current)
             let before = current.scroll.contentOffset
             old.scroll.contentOffset.y = 200
             XCTAssertEqual(current.scroll.contentOffset, before)
-            paging.removeFromSuperview(); window.rootViewController = nil
+            paging!.removeFromSuperview(); window.isHidden = true; window.rootViewController = nil; paging = nil
         }
-        XCTAssertNil(released.value)
+        await assertReleased(released)
         retainedOldList?.scroll.contentOffset.y = 300
     }
 }
@@ -181,4 +189,10 @@ private final class TestController: UIViewController, JXPagingViewListViewDelega
 private final class WeakReference {
     weak var value: AnyObject?
     init(_ value: AnyObject?) { self.value = value }
+}
+
+@MainActor
+private final class VisibleHostController: UIViewController {
+    var appeared = false
+    override func viewDidAppear(_ animated: Bool) { super.viewDidAppear(animated); appeared = true }
 }
