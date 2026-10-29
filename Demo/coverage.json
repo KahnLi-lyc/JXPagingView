@@ -1,0 +1,137 @@
+{
+  "routes": [
+    {
+      "id": "scroll",
+      "features": [
+        "scrollView container",
+        "UIView list",
+        "lazy list creation",
+        "long and short lists",
+        "selection and lifecycle",
+        "vertical pin and return"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "collection",
+      "features": [
+        "collectionView container",
+        "initial index 1",
+        "list reuse",
+        "selection and lifecycle"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "refresh",
+      "features": [
+        "JXPagingListRefreshView",
+        "UIRefreshControl",
+        "refresh during switching",
+        "synchronous delegate forwarding"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "smooth",
+      "features": [
+        "JXPagingSmoothView",
+        "horizontal selection",
+        "continuous vertical header",
+        "content size updates",
+        "empty reload and observation cleanup"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "header",
+      "features": [
+        "header height animation and nonanimation",
+        "pin offset",
+        "horizontal scrolling option",
+        "automatic scroll indicators"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "cache",
+      "features": [
+        "stable string identifiers",
+        "same instance and position",
+        "empty restore",
+        "insert remove reorder",
+        "cache toggle"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "controllers",
+      "features": [
+        "UIViewController lists",
+        "containment",
+        "display callbacks",
+        "reload detachment"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "gestures",
+      "features": [
+        "custom UIScrollView class",
+        "system edge back priority",
+        "main table gesture delegate"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "nested",
+      "features": [
+        "nested horizontal scroll view",
+        "category nesting",
+        "simultaneous gesture policy"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    },
+    {
+      "id": "container",
+      "features": [
+        "standalone container",
+        "creation gate",
+        "preload threshold",
+        "background color",
+        "default index and reload"
+      ],
+      "automated": [
+        "DemoUITests.testEveryCatalogEntrySelectsRealPageAndReleases"
+      ],
+      "manual": "Not executed; see Demo/COVERAGE.md"
+    }
+  ]
+}
